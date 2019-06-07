@@ -13,6 +13,24 @@ class CountryController {
 
     companion object: Log()
 
+    @GetMapping("/")
+    fun home(): ModelAndView {
+        val mav = ModelAndView()
+        mav.viewName = "home"
+        val endpoints = mutableListOf<String>()
+        endpoints.add("/names")
+        endpoints.add("/economy")
+        endpoints.add("/country/{id}")
+        endpoints.add("/country/stats/median")
+        endpoints.add("/total")
+        endpoints.add("/names/{start letter}/{end letter}")
+        endpoints.add("/gdp/list/{start gdp}/{end gdp}")
+
+        mav.addObject("endpoints", endpoints)
+
+        return mav
+    }
+
     // /names
     @GetMapping("/names")
     fun namesAsc(): ResponseEntity<*> {
@@ -87,6 +105,89 @@ class CountryController {
         countryListByEconomy.sortByDescending { it.gdp }
 
         mav.addObject("countryList", countryListByEconomy)
+
+        return mav
+    }
+
+    // /total
+    @GetMapping("/total")
+    fun getTotalGDP(): ResponseEntity<*> {
+        logger.info("/total accessed")
+
+        var totalGDP: Long = 0
+        Sprint12Application.countryList.data.forEach {
+            totalGDP += it.gdp
+        }
+
+        val outCountry = Country("Total", totalGDP.toString())
+
+        return ResponseEntity(outCountry, HttpStatus.OK)
+    }
+
+    // /names/{start letter}/{end letter}
+    // inclusive
+    @GetMapping("/names/{start letter}/{end letter}")
+    fun displayCountriesStartEndName(
+            @PathVariable("start letter") startLetter: Char,
+            @PathVariable("end letter") endLetter: Char
+    ): ModelAndView {
+
+        logger.info("/names/{start letter}/{end letter} accessed")
+
+        val startLetterLC = startLetter.toLowerCase()
+        val endLetterLC = endLetter.toLowerCase()
+
+        val mav = ModelAndView()
+        mav.viewName = "countriesStartEndName"
+
+        val includedCountries = mutableListOf<Country>()
+        mav.addObject("countryList", includedCountries)
+
+        if (startLetterLC > endLetterLC) {
+            return mav
+        }
+
+        Sprint12Application.countryList.data.forEach {
+            val countryLetter = it.name?.get(0)?.toLowerCase()
+            if (countryLetter != null) {
+                if (countryLetter in startLetterLC..endLetterLC) {
+                    includedCountries.add(it)
+                }
+            }
+        }
+
+        includedCountries.sortBy { it.name }
+
+        return mav
+    }
+
+    // /gdp/list/{start gdp}/{end gdp}
+    // inclusive
+    @GetMapping("/gdp/list/{start gdp}/{end gdp}")
+    fun displayCountriesStartEndGDP(
+            @PathVariable("start gdp") startGDP: Long,
+            @PathVariable("end gdp") endGDP: Long
+    ): ModelAndView {
+
+        logger.info("/gdp/list/{start gdp}/{end gdp} accessed")
+
+        val mav = ModelAndView()
+        mav.viewName = "countriesStartEndGDP"
+
+        val includedCountries = mutableListOf<Country>()
+        mav.addObject("countryList", includedCountries)
+
+        if (startGDP > endGDP) {
+            return mav
+        }
+
+        Sprint12Application.countryList.data.forEach {
+            if (it.gdp in startGDP..endGDP) {
+                includedCountries.add(it)
+            }
+        }
+
+        includedCountries.sortBy { it.gdp }
 
         return mav
     }
