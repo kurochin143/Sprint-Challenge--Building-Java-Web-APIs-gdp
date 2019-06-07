@@ -1,0 +1,17 @@
+<html xmlns:th="http://thymeleaf.org">
+<head>
+    <meta charset="UTF-8"/>
+    <title>Home</title>
+</head>
+<body>
+    <h>Welcome, please use these endpoints</h>
+    <table border="1">
+        <tr>
+            <th>Endpoints</th>
+        </tr>
+        <tr th:each="endpoint : ${endpoints}">
+            <td th:text="${endpoint}">Endpoints</td>
+        </tr>
+    </table>
+</body>
+</html>
